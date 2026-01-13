@@ -1,2 +1,2 @@
 # xiaozhi-ai-assistant
-xiaozhi-ai-assistantE
+xiaozhi-ai-assistante
