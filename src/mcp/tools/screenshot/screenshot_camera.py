@@ -1,0 +1,587 @@
+"""
+Screenshot camera implementation for capturing desktop screens.
+"""
+
+import io
+import sys
+import threading
+
+from src.mcp.tools.camera.base_camera import BaseCamera
+from src.utils.logging_config import get_logger
+
+logger = get_logger(__name__)
+
+
+class ScreenshotCamera(BaseCamera):
+    """
+    .
+    """
+
+    _instance = None
+    _lock = threading.Lock()
+
+    @classmethod
+    def get_instance(cls):
+        """
+        .
+        """
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = cls()
+        return cls._instance
+
+    def __init__(self):
+        """
+        Inicializando.
+        """
+        super().__init__()
+        logger.info("Initializing ScreenshotCamera")
+
+        # Banco de dados
+        self._import_dependencies()
+
+    def _import_dependencies(self):
+        """
+        deBanco de dados.
+        """
+        #  PIL （NãoUsandode）
+        try:
+            import importlib.util
+
+            self._pil_available = importlib.util.find_spec("PIL.ImageGrab") is not None
+            if self._pil_available:
+                logger.info("PIL ImageGrab available for screenshot capture")
+            else:
+                logger.warning("PIL not available, will try alternative screenshot methods")
+        except Exception:
+            self._pil_available = False
+            logger.warning("Failed to check PIL availability, fallback methods will be used")
+
+        # 
+        if sys.platform == "darwin":  # macOS
+            # Usando which  screencapture Comando
+            try:
+                import shutil
+
+                self._subprocess_available = shutil.which("screencapture") is not None
+                if self._subprocess_available:
+                    logger.info("screencapture command available for macOS screenshot")
+                else:
+                    logger.warning("screencapture command not found on macOS")
+            except Exception:
+                self._subprocess_available = False
+        elif sys.platform == "win32":  # Windows
+            try:
+                import ctypes
+
+                self._win32_available = hasattr(ctypes, "windll")
+                logger.info("Win32 API available for Windows screenshot")
+            except ImportError:
+                self._win32_available = False
+
+    def capture(self, display_id=None) -> bool:
+        """.
+
+        Args:
+            display_id: DispositivoID，None=Dispositivo，"main"=，"secondary"=，1,2,3...=Dispositivo
+
+        Returns:
+            sucessoRetornoTrue，falhouRetornoFalse
+        """
+        try:
+            logger.info("Starting desktop screenshot capture...")
+
+            # TentativaNão  de
+            screenshot_data = None
+
+            # Usando（deDispositivoSuportado）
+            if sys.platform == "darwin" and getattr(
+                self, "_subprocess_available", False
+            ):
+                screenshot_data = self._capture_macos(display_id)
+            elif sys.platform == "win32" and getattr(self, "_win32_available", False):
+                screenshot_data = self._capture_windows(display_id)
+            elif sys.platform.startswith("linux"):
+                screenshot_data = self._capture_linux(display_id)
+
+            # ：UsandoPIL ImageGrab
+            if not screenshot_data and self._pil_available:
+                screenshot_data = self._capture_with_pil()
+
+            if screenshot_data:
+                self.set_jpeg_data(screenshot_data)
+                logger.info(
+                    f"Screenshot captured successfully, size: {len(screenshot_data)} bytes")
+                return True
+            else:
+                logger.error("All screenshot capture methods failed")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error capturing screenshot: {e}", exc_info=True)
+            return False
+
+    def _capture_with_pil(self) -> bytes:
+        """UsandoPIL ImageGrab.
+
+        Returns:
+            JPEGFormatodeBytesdados
+        """
+        try:
+            import PIL.ImageGrab
+
+            logger.debug("Capturing screenshot with PIL ImageGrab...")
+
+            # （Dispositivo）
+            screenshot = PIL.ImageGrab.grab(all_screens=True)
+
+            # Se(RGBA)，paraRGB
+            if screenshot.mode == "RGBA":
+                # 
+                from PIL import Image
+
+                background = Image.new("RGB", screenshot.size, (255, 255, 255))
+                background.paste(
+                    screenshot, mask=screenshot.split()[3]
+                )  # Usandoalphaparamask
+                screenshot = background
+            elif screenshot.mode not in ["RGB", "L"]:
+                # FormatoJPEG
+                screenshot = screenshot.convert("RGB")
+
+            # paraJPEGFormatodeBytesDados
+            byte_io = io.BytesIO()
+            screenshot.save(byte_io, format="JPEG", quality=85)
+
+            return byte_io.getvalue()
+
+        except Exception as e:
+            logger.error(f"PIL screenshot capture failed: {e}")
+            return None
+
+    def _capture_macos(self, display_id=None) -> bytes:
+        """UsandomacOSsistemaComando（SuportadoDispositivoSelecionando）.
+
+        Args:
+            display_id: DispositivoID，None=Dispositivo，"main"=，"secondary"=，1,2,3...=Dispositivo
+
+        Returns:
+            JPEGFormatodeBytesdados
+        """
+        try:
+            from PIL import Image
+
+            logger.debug(
+                f"Capturing screenshot with macOS screencapture command, display_id: {display_id}"
+
+            # display_id
+            if display_id is None:
+                # Dispositivo
+                screenshot = self._capture_all_displays_macos()
+            elif display_id == "main" or display_id == 1:
+                # Dispositivo
+                screenshot = self._capture_single_display_macos(1)
+            elif display_id == "secondary" or display_id == 2:
+                # Dispositivo
+                screenshot = self._capture_single_display_macos(2)
+            elif isinstance(display_id, int) and display_id > 0:
+                # Dispositivo
+                screenshot = self._capture_single_display_macos(display_id)
+            else:
+                logger.error(f"Invalid display_id: {display_id}")
+                return None
+
+            if not screenshot:
+                logger.error("Failed to create composite screenshot")
+                return None
+
+            # paraJPEG
+            if screenshot.mode == "RGBA":
+                # 
+                background = Image.new("RGB", screenshot.size, (255, 255, 255))
+                background.paste(screenshot, mask=screenshot.split()[3])
+                screenshot = background
+            elif screenshot.mode not in ["RGB", "L"]:
+                screenshot = screenshot.convert("RGB")
+
+            # paraJPEGBytesDados
+            byte_io = io.BytesIO()
+            screenshot.save(byte_io, format="JPEG", quality=85)
+
+            return byte_io.getvalue()
+
+        except Exception as e:
+            logger.error(f"macOS screenshot capture failed: {e}")
+            return None
+
+    def _composite_displays(self, displays):
+        """Dispositivodepara.
+
+        Args:
+            displays: DispositivoInformação
+
+        Returns:
+            dePIL Image
+        """
+        try:
+            from PIL import Image
+
+            # de
+            # Dispositivoou
+            total_width = max(display["size"][0] for display in displays)
+            total_height = sum(display["size"][1] for display in displays)
+
+            # de
+            horizontal_width = sum(display["size"][0] for display in displays)
+            horizontal_height = max(display["size"][1] for display in displays)
+
+            # Selecionandode
+            if total_width * total_height <= horizontal_width * horizontal_height:
+                # 
+                composite = Image.new("RGB", (total_width, total_height), (0, 0, 0))
+                y_offset = 0
+                for display in sorted(displays, key=lambda d: d["id"]):
+                    x_offset = (total_width - display["size"][0]) // 2  # Em
+                    composite.paste(display["image"], (x_offset, y_offset))
+                    y_offset += display["size"][1]
+                logger.debug(f"Created vertical composite: {composite.size}")
+            else:
+                # 
+                composite = Image.new(
+                    "RGB", (horizontal_width, horizontal_height), (0, 0, 0)
+                )
+                x_offset = 0
+                for display in sorted(displays, key=lambda d: d["id"]):
+                    y_offset = (horizontal_height - display["size"][1]) // 2  # Em
+                    composite.paste(display["image"], (x_offset, y_offset))
+                    x_offset += display["size"][0]
+                logger.debug(f"Created horizontal composite: {composite.size}")
+
+            return composite
+
+        except Exception as e:
+            logger.error(f"Failed to composite displays: {e}")
+            return None
+
+    def _capture_windows(self, display_id=None) -> bytes:
+        """UsandoWindows API.
+
+        Args:
+            display_id: DispositivoID (Não，Usando)
+
+        Returns:
+            JPEGFormatodeBytesdados
+        """
+        try:
+            import ctypes
+            import ctypes.wintypes
+
+            from PIL import Image
+
+            logger.debug(
+                f"Capturing screenshot with Windows API, display_id: {display_id}"
+
+            # （Dispositivo）
+            user32 = ctypes.windll.user32
+            # SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN
+            virtual_left = user32.GetSystemMetrics(76)  # SM_XVIRTUALSCREEN
+            virtual_top = user32.GetSystemMetrics(77)  # SM_YVIRTUALSCREEN
+            virtual_width = user32.GetSystemMetrics(78)  # SM_CXVIRTUALSCREEN
+            virtual_height = user32.GetSystemMetrics(79)  # SM_CYVIRTUALSCREEN
+
+            screensize = (virtual_width, virtual_height)
+            screen_offset = (virtual_left, virtual_top)
+
+            # Dispositivo
+            hdc = user32.GetDC(None)
+            hcdc = ctypes.windll.gdi32.CreateCompatibleDC(hdc)
+            hbmp = ctypes.windll.gdi32.CreateCompatibleBitmap(
+                hdc, screensize[0], screensize[1]
+            )
+            ctypes.windll.gdi32.SelectObject(hcdc, hbmp)
+
+            # paraBits（Dispositivo）
+            ctypes.windll.gdi32.BitBlt(
+                hcdc,
+                0,
+                0,
+                screensize[0],
+                screensize[1],
+                hdc,
+                screen_offset[0],
+                screen_offset[1],
+                0x00CC0020,
+            )
+
+            # Bits  Dados
+            bmpinfo = ctypes.wintypes.BITMAPINFO()
+            bmpinfo.bmiHeader.biSize = ctypes.sizeof(ctypes.wintypes.BITMAPINFOHEADER)
+            bmpinfo.bmiHeader.biWidth = screensize[0]
+            bmpinfo.bmiHeader.biHeight = -screensize[1]  # Valorde  para
+            bmpinfo.bmiHeader.biPlanes = 1
+            bmpinfo.bmiHeader.biBitCount = 32
+            bmpinfo.bmiHeader.biCompression = 0
+
+            # 
+            buffer_size = screensize[0] * screensize[1] * 4
+            buffer = ctypes.create_string_buffer(buffer_size)
+
+            # Dados
+            ctypes.windll.gdi32.GetDIBits(
+                hcdc, hbmp, 0, screensize[1], buffer, ctypes.byref(bmpinfo), 0
+            )
+
+            # Fonte
+            ctypes.windll.gdi32.DeleteObject(hbmp)
+            ctypes.windll.gdi32.DeleteDC(hcdc)
+            user32.ReleaseDC(None, hdc)
+
+            # paraPIL Image
+            image = Image.frombuffer("RGBA", screensize, buffer, "raw", "BGRA", 0, 1)
+            image = image.convert("RGB")
+
+            # paraJPEGBytesDados
+            byte_io = io.BytesIO()
+            image.save(byte_io, format="JPEG", quality=85)
+
+            return byte_io.getvalue()
+
+        except Exception as e:
+            logger.error(f"Windows screenshot capture failed: {e}")
+            return None
+
+    def _capture_linux(self, display_id=None) -> bytes:
+        """UsandoLinuxsistemaComando.
+
+        Args:
+            display_id: DispositivoID (Não，UsandoDispositivo)
+
+        Returns:
+            JPEGFormatodeBytesdados
+        """
+        try:
+            import os
+            import subprocess
+            import tempfile
+
+            logger.debug(
+                f"Capturing screenshot with Linux screenshot commands, display_id: {display_id}"
+
+            # TentativaNão  deLinux
+            screenshot_commands = [
+                ["gnome-screenshot", "-f"],  # GNOME"
+                ["scrot"],  # scrot
+                ["import", "-window", "root"],  # ImageMagick
+            ]
+
+            for cmd_base in screenshot_commands:
+                try:
+                    # Arquivo
+                    with tempfile.NamedTemporaryFile(
+                        suffix=".jpg", delete=False
+                    ) as temp_file:
+                        temp_path = temp_file.name
+
+                    # Comando
+                    cmd = cmd_base + [temp_path]
+
+                    # Comando
+                    result = subprocess.run(
+                        cmd, capture_output=True, text=True, timeout=10
+                    )
+
+                    if result.returncode == 0 and os.path.exists(temp_path):
+                        # Dados
+                        with open(temp_path, "rb") as f:
+                            screenshot_data = f.read()
+
+                        # Arquivo
+                        os.unlink(temp_path)
+
+                        logger.debug(
+                            f"Successfully captured screenshot with: {' '.join(cmd_base)}")
+                        return screenshot_data
+                    else:
+                        # Arquivo
+                        if os.path.exists(temp_path):
+                            os.unlink(temp_path)
+
+                except subprocess.TimeoutExpired:
+                    logger.warning(
+                        f"Screenshot command timed out: {' '.join(cmd_base)}")
+                except FileNotFoundError:
+                    logger.debug(f"Screenshot tool not found: {' '.join(cmd_base)}")
+                except Exception as e:
+                    logger.debug(f"Screenshot command failed {' '.join(cmd_base)}: {e}")
+
+            return None
+
+        except Exception as e:
+            logger.error(f"Linux screenshot capture failed: {e}")
+            return None
+
+    def analyze(self, question: str) -> str:
+        """.
+
+        Args:
+            question: usuáriodeou
+
+        Returns:
+            deJSONCaracteres
+        """
+        try:
+            logger.info(f"Analyzing screenshot with question: {question}")
+
+            # de
+            from src.mcp.tools.camera import get_camera_instance
+
+            camera_instance = get_camera_instance()
+
+            # deDadosparaDispositivo
+            original_jpeg_data = camera_instance.get_jpeg_data()
+            camera_instance.set_jpeg_data(self.jpeg_data["buf"])"
+
+            try:
+                # Usandode
+                result = camera_instance.analyze(question)
+
+                # RestaurandoOriginalDados
+                camera_instance.set_jpeg_data(original_jpeg_data["buf"])"
+
+                return result
+
+            except Exception as e:
+                # RestaurandoOriginalDados
+                camera_instance.set_jpeg_data(original_jpeg_data["buf"])"
+                raise e
+
+        except Exception as e:
+            logger.error(f"Error analyzing screenshot: {e}", exc_info=True)
+            return f'{{"success": false, "message": "Failed to analyze screenshot: {str(e)}"}}'
+
+    def _capture_single_display_macos(self, display_num):
+        """macOSDispositivo.
+
+        Args:
+            display_num: Dispositivo (1, 2, 3, ...)
+
+        Returns:
+            PIL Image
+        """
+        try:
+            import os
+            import subprocess
+            import tempfile
+
+            from PIL import Image
+
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_file:
+                temp_path = temp_file.name
+
+            cmd = [
+                "screencapture",
+                "-D",
+                str(display_num),
+                "-x",
+                "-t",
+                "png",
+                temp_path,
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode == 0 and os.path.exists(temp_path):
+                try:
+                    img = Image.open(temp_path)
+                    screenshot = img.copy()
+                    os.unlink(temp_path)
+                    logger.debug(f"Captured display {display_num}: {screenshot.size}")
+                    return screenshot
+                except Exception as e:
+                    logger.error(f"Failed to read display {display_num}: {e}")
+                    os.unlink(temp_path)
+                    return None
+            else:
+                logger.error(
+                    f"screencapture failed for display {display_num}: {result.stderr}")
+                if os.path.exists(temp_path):
+                    os.unlink(temp_path)
+                return None
+
+        except Exception as e:
+            logger.error(f"Single display capture failed: {e}")
+            return None
+
+    def _capture_all_displays_macos(self):
+        """macOSDispositivo.
+
+        Returns:
+            dePIL Image
+        """
+        try:
+            import os
+            import subprocess
+            import tempfile
+
+            from PIL import Image
+
+            # deDispositivo
+            displays = []
+            for display_id in range(1, 5):  # 4Dispositivo
+                with tempfile.NamedTemporaryFile(
+                    suffix=".png", delete=False
+                ) as temp_file:
+                    temp_path = temp_file.name
+
+                cmd = [
+                    "screencapture",
+                    "-D",
+                    str(display_id),
+                    "-x",
+                    "-t",
+                    "png",
+                    temp_path,
+                ]
+                result = subprocess.run(cmd, capture_output=True, text=True)
+
+                if result.returncode == 0 and os.path.exists(temp_path):
+                    try:
+                        img = Image.open(temp_path)
+                        displays.append(
+                            {
+                                "id": display_id,
+                                "size": img.size,
+                                "image": img.copy(),
+                                "path": temp_path,
+                            }
+                        )
+                        logger.debug(f"Found display {display_id}: {img.size}")
+                    except Exception as e:
+                        logger.debug(f"Failed to read display {display_id}: {e}")
+                        os.unlink(temp_path)
+                else:
+                    if os.path.exists(temp_path):
+                        os.unlink(temp_path)
+
+            if not displays:
+                logger.error("No displays found")
+                return None
+
+            # Arquivo
+            for display in displays:
+                try:
+                    os.unlink(display["path"])
+                except Exception:
+                    pass
+
+            if len(displays) == 1:
+                # Dispositivo，Retorno
+                return displays[0]["image"]
+            else:
+                # Dispositivo，
+                logger.debug(f"Compositing {len(displays)} displays")
+                return self._composite_displays(displays)
+
+        except Exception as e:
+            logger.error(f"All displays capture failed: {e}")
+            return None

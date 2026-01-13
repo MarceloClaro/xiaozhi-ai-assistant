@@ -1,0 +1,12 @@
+{
+  "mac_address": "d0:8e:79:df:74:77",
+  "serial_number": "SN-426E39C1-d08e79df7477",
+  "hmac_key": "a30c31ca6ac5bd20442a3a815d076d62870930aebc0a69a2fb21ae9d305e80be",
+  "activation_status": true,
+  "device_fingerprint": {
+    "system": "Windows",
+    "hostname": "Geomaker",
+    "mac_address": "d0:8e:79:df:74:77",
+    "machine_id": "c1f13bd8-06d5-4aef-94fd-18f4787cb2f3"
+  }
+}

@@ -1,0 +1,75 @@
+================================================================================
+           BACKUP DAS CONFIGURAÇÕES DO SISTEMA - PY-XIAOZHI
+                        Data: 12/01/2026 20:36
+================================================================================
+
+[SISTEMA]
+--------------------------------------------------------------------------------
+ID do Cliente                  : -420f-b826-e1e38e19e56e
+ID do Dispositivo              : d0:8e:79:df:74:77
+URL de Versão OTA              : pi.tendclass.net/xiaozhi/ota/
+WebSocket URL                  : api.tendclass.net/xiaozhi/v1/
+WebSocket Token                : test-token
+URL de Autorização             : https://xiaozhi.me/
+Versão de Ativação             : v2
+Ativar Eliminação de Eco AEC   : ☐ (não marcado)
+Tamanho da Janela Principal    : Padrão
+
+
+[CONFIGURAÇÃO MQTT]
+--------------------------------------------------------------------------------
+Ponto de Extremidade           : mqtt.xiaozhi.me
+ID do Cliente                  : ca55-420f-b826-e1e38e19e56e
+Nome de Usuário                : eyJpcCI6IjE3Ny4yNy4yMTguMjMiLCJ0a
+Senha                          : d90JH4J3vLEOdXEIYbuD9BqV50yVqUk1BHcuIUeAsTE=
+Tópico de Publicação           : device-server
+Tópico de Inscrição            : null
+
+
+[CONFIGURAÇÃO DA CÂMERA]
+--------------------------------------------------------------------------------
+Índice da Câmera               : 0
+Largura do Quadro              : 640 pixels
+Altura do Quadro               : 480 pixels
+Taxa de Quadros (FPS)          : 30
+URL VL Local                   : (não configurado)
+Senha VL (API Key)             : (vazio - não configurado)
+Ponto de Extremidade           : (não configurado)
+
+
+[PALAVRAS DE ATIVAÇÃO]
+--------------------------------------------------------------------------------
+Status                         : Não configurado
+Caminho do Modelo              : (não configurado)
+Lista de Palavras              : (vazio)
+
+
+[DISPOSITIVOS DE ÁUDIO]
+--------------------------------------------------------------------------------
+Dispositivo de Entrada         : Configurado automaticamente
+Dispositivo de Saída           : Configurado automaticamente
+Taxa de Amostragem (Entrada)   : 48000Hz 2ch
+Taxa de Amostragem (Saída)     : 44100Hz 2ch
+
+
+[OBSERVAÇÕES]
+--------------------------------------------------------------------------------
+- ⚠️ BACKUP COMPLETO SEM MÁSCARAS - MANTENHA ESTE ARQUIVO SEGURO
+- Os campos de senha e token estão visíveis na interface para auditoria
+- Backup criado após modificações para conformidade de auditoria
+- Arquivo gerado automaticamente pelo sistema
+- TODAS as credenciais estão em TEXTO CLARO neste backup
+
+
+[STATUS DO SISTEMA]
+--------------------------------------------------------------------------------
+Ativação                       : ✅ Concluída
+Protocolo Ativo                : WebSocket
+Estado do Dispositivo          : Operacional
+Log de Aplicação               : logs/app.log
+Arquivo de Configuração        : config/efuse.json
+
+
+================================================================================
+                            FIM DO BACKUP
+================================================================================

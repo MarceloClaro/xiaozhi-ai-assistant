@@ -1,0 +1,105 @@
+{
+  "SYSTEM_OPTIONS": {
+    "CLIENT_ID": "b0391636-ca55-420f-b826-e1e38e19e56e",
+    "DEVICE_ID": "d0:8e:79:df:74:77",
+    "NETWORK": {
+      "OTA_VERSION_URL": "https://api.tenclass.net/xiaozhi/ota/",
+      "WEBSOCKET_URL": "wss://api.tenclass.net/xiaozhi/v1/",
+      "WEBSOCKET_ACCESS_TOKEN": "test-token",
+      "MQTT_INFO": {
+        "endpoint": "mqtt.xiaozhi.me",
+        "client_id": "GID_test@@@d0_8e_79_df_74_77@@@b0391636-ca55-420f-b826-e1e38e19e56e",
+        "username": "eyJpcCI6IjE3Ny4zNy4xODcuMTU1In0=",
+        "password": "d90JH4J3vLEOdXEIYbuD9BqV50yVqUk1BHcuIUeAsTE=",
+        "publish_topic": "device-server",
+        "subscribe_topic": "null"
+      },
+      "ACTIVATION_VERSION": "v2",
+      "AUTHORIZATION_URL": "https://xiaozhi.me/"
+    },
+    "WINDOW_SIZE_MODE": "default"
+  },
+  "WAKE_WORD_OPTIONS": {
+    "USE_WAKE_WORD": true,
+    "MODEL_PATH": "models",
+    "NUM_THREADS": 4,
+    "PROVIDER": "cpu",
+    "MAX_ACTIVE_PATHS": 2,
+    "KEYWORDS_SCORE": 1.8,
+    "KEYWORDS_THRESHOLD": 0.2,
+    "NUM_TRAILING_BLANKS": 1
+  },
+  "CAMERA": {
+    "camera_index": 0,
+    "frame_width": 640,
+    "frame_height": 480,
+    "fps": 30,
+    "Local_VL_url": "https://open.bigmodel.cn/api/paas/v4/",
+    "VLapi_key": "",
+    "models": "glm-4v-plus"
+  },
+  "SHORTCUTS": {
+    "ENABLED": true,
+    "MANUAL_PRESS": {
+      "modifier": "ctrl",
+      "key": "j",
+      "description": "按住说话"
+    },
+    "AUTO_TOGGLE": {
+      "modifier": "ctrl",
+      "key": "k",
+      "description": "自动对话"
+    },
+    "ABORT": {
+      "modifier": "ctrl",
+      "key": "q",
+      "description": "中断对话"
+    },
+    "MODE_TOGGLE": {
+      "modifier": "ctrl",
+      "key": "m",
+      "description": "切换模式"
+    },
+    "WINDOW_TOGGLE": {
+      "modifier": "ctrl",
+      "key": "w",
+      "description": "显示/隐藏窗口"
+    }
+  },
+  "AEC_OPTIONS": {
+    "ENABLED": false,
+    "BUFFER_MAX_LENGTH": 50,
+    "FRAME_DELAY": 1,
+    "FILTER_LENGTH_RATIO": 0.2,
+    "ENABLE_PREPROCESS": false
+  },
+  "AUDIO_DEVICES": {
+    "input_device_id": 19,
+    "input_device_name": "Microfone (Realtek(R) Audio)",
+    "output_device_id": 12,
+    "output_device_name": "Driver de som primário",
+    "input_sample_rate": 48000,
+    "output_sample_rate": 44100,
+    "input_channels": 2,
+    "output_channels": 2
+  },
+  "CAMERA_OPTIONS": {
+    "INDEX": 0,
+    "FRAME_WIDTH": 640,
+    "FRAME_HEIGHT": 480,
+    "FPS": 30,
+    "LOCAL_VL_URL": "https://api.tenclass.net/xiaozhi/vision/explain",
+    "VL_API_KEY": "",
+    "MODELS": ""
+  },
+  "AI_MODEL": {
+    "USE_LOCAL": false,
+    "FALLBACK_ENABLED": true,
+    "PREFER_LOCAL": false,
+    "LOCAL_MODEL_PATH": "models/llm-model-deepseek-r1-1.5B-ax630c_0.3-m5stack1_arm64.deb",
+    "LOCAL_MODEL_ENDPOINT": "http://127.0.0.1:11434/api/generate",
+    "LOCAL_MODEL_NAME": "llava",
+    "TIMEOUT_LOCAL": 30,
+    "TIMEOUT_REMOTE": 20
+  }
+}
