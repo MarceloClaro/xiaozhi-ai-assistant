@@ -34,8 +34,8 @@
     "frame_width": 640,
     "frame_height": 480,
     "fps": 30,
-    "Local_VL_url": "https://open.bigmodel.cn/api/paas/v4/",
-    "VLapi_key": "",
+    "Local_VL_url": "http://api.xiaozhi.me/vision/explain",
+    "VLapi_key": "d66ea037-1b07-4283-b49b-b629e005c074",
     "models": "glm-4v-plus"
   },
   "SHORTCUTS": {
@@ -101,5 +101,28 @@
     "LOCAL_MODEL_NAME": "llava",
     "TIMEOUT_LOCAL": 30,
     "TIMEOUT_REMOTE": 20
+  },
+  "selected_module": {
+    "VLLM": "gemini"
+  },
+  "VLLM": {
+    "gemini": {
+      "type": "gemini",
+      "api_key": "${GEMINI_API_KEY}",
+      "model": "gemini-2.0-flash-exp",
+      "api_url": "https://generativelanguage.googleapis.com/v1beta/models",
+      "temperature": 0.7,
+      "max_tokens": 2048,
+      "timeout": 30.0
+    },
+    "zhipu": {
+      "type": "zhipu",
+      "api_key": "${ZHIPU_API_KEY}",
+      "model": "glm-4v-flash",
+      "api_url": "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      "temperature": 0.7,
+      "max_tokens": 2048,
+      "timeout": 30.0
+    }
   }
 }

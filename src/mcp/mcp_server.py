@@ -423,6 +423,15 @@ class McpServer:
         capabilities = params.get("capabilities", {})
         await self._parse_capabilities(capabilities)
 
+        # DEBUG: Log contagem de tools
+        logger.info(f"[MCP INIT] Tools count: {len(self.tools)}")
+        logger.info("[MCP INIT] Available tools:")
+        for tool in self.tools[:5]:
+            logger.info(f"  - {tool.name}")
+        if len(self.tools) > 5:
+            remaining = len(self.tools) - 5
+            logger.info(f"  ... and {remaining} more")
+
         # RetornoDispositivoInformação
         result = {
             "protocolVersion": "2024-11-05",
@@ -439,6 +448,13 @@ class McpServer:
         """
         Processando.
         """
+        # DEBUG: Log total de tools registradas
+        tools_total = len(self.tools)
+        logger.info(f"[MCP TOOLS/LIST] Total de tools: {tools_total}")
+        logger.info("[MCP TOOLS/LIST] Tools disponíveis:")
+        for tool in self.tools:
+            logger.info(f"  - {tool.name}")
+        
         cursor = params.get("cursor", "")
         max_payload_size = 8000
 

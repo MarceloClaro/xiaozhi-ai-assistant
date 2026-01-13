@@ -29,15 +29,30 @@ def _safe_import_sentence_transformers():
 
         spec = importlib.util.find_spec("sentence_transformers")
         if spec is not None:
-            from sentence_transformers import SentenceTransformer
-            EMBEDDING_AVAILABLE = True
-            return SentenceTransformer
+            try:
+                from sentence_transformers import SentenceTransformer
+                EMBEDDING_AVAILABLE = True
+                return SentenceTransformer
+            except (ImportError, RuntimeError, ModuleNotFoundError) as e:
+                logger.warning(
+                    f"Erro ao carregar SentenceTransformer: {e}"
+                )
+                EMBEDDING_AVAILABLE = False
+                return None
         else:
             logger.warning("sentence-transformers não instalado")
             EMBEDDING_AVAILABLE = False
             return None
-    except Exception:
-        logger.warning("Não foi possível carregar sentence-transformers")
+    except KeyboardInterrupt:
+        logger.error(
+            "Interrompido ao carregar sentence-transformers"
+        )
+        EMBEDDING_AVAILABLE = False
+        return None
+    except Exception as e:
+        logger.warning(
+            f"Não foi possível carregar sentence-transformers: {e}"
+        )
         EMBEDDING_AVAILABLE = False
         return None
 

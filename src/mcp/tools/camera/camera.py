@@ -1,7 +1,8 @@
 import threading
+import base64
+import json
 
 import cv2
-import requests
 
 from src.utils.config_manager import ConfigManager
 from src.utils.logging_config import get_logger
@@ -126,63 +127,119 @@ class Camera:
 
     def explain(self, question: str) -> str:
         """
-        Enviandoimagem.
+        Envia imagem para Vision API (DEPRECATED).
+        Use take_photo() com Vision API Integration.
         """
-        if not self.explain_url:
-            return '{"success": false, "message": "Image explain URL is not set"}'
-
-        if not self.jpeg_data["buf"]:
-            return '{"success": false, "message": "Camera buffer is empty"}'
-
-        # 
-        headers = {"Device-Id": self.get_device_id(), "Client-Id": self.get_client_id()}
-
-        if self.explain_token:
-            headers["Authorization"] = f"Bearer {self.explain_token}"
-
-        # ArquivoDados
-        files = {
-            "question": (None, question),
-            "file": ("camera.jpg", self.jpeg_data["buf"], "image/jpeg"),
-        }
-
-        try:
-            # Enviando
-            response = requests.post(
-                self.explain_url, headers=headers, files=files, timeout=10
-            )
-
-            # PesquisarEstado
-            if response.status_code != 200:
-                error_msg = (
-                    f"Failed to upload photo, status code: {response.status_code}"
-                )
-                logger.error(error_msg)
-                return f'{{"success": false, "message": "{error_msg}"}}'
-
-            # 
-            logger.info(
-                f"Explain image size={self.jpeg_data['len']}, "
-                f"question={question}\n{response.text}")
-            return response.text
-
-        except requests.RequestException as e:
-            error_msg = f"Failed to connect to explain URL: {str(e)}"
-            logger.error(error_msg)
-            return f'{{"success": false, "message": "{error_msg}"}}'
+        logger.warning(
+            "Camera.explain() is deprecated. "
+            "Use take_photo() for Vision API analysis."
+        )
+        return '{"success": false, "message": "Use take_photo() instead"}'
 
 
 def take_photo(arguments: dict) -> str:
     """
-    de.
+    Captura foto da câmera e analisa com Vision API.
+    
+    Argumentos:
+        question: (opcional) Pergunta sobre a imagem
+        
+    Retorna:
+        JSON com resultado:
+        {
+            "success": true,
+            "photo_description": "Descrição da imagem",
+            "tokens_used": 256
+        }
     """
-    camera = Camera.get_instance()
-    question = arguments.get("question", "")
-
-    # 
-    success = camera.capture()
-    if not success:
-        return '{"success": false, "message": "Failed to capture photo"}'
-
-    # Enviando
-    return camera.explain(question)
+    try:
+        # Importar aqui para evitar dependência circular
+        import asyncio
+        from src.mcp.tools.providers import explain_image_via_mcp
+        
+        camera = Camera.get_instance()
+        question = arguments.get(
+            "question",
+            "Descreva detalhadamente tudo que você vê nesta imagem"
+        )
+        
+        # Capturar imagem
+        logger.info("[Camera] Capturando foto...")
+        success = camera.capture()
+        if not success:
+            return '{"success": false, "message": "Falha ao capturar foto"}'
+        
+        # Converter para base64
+        image_base64 = base64.b64encode(
+            camera.jpeg_data["buf"]
+        ).decode('utf-8')
+        
+        logger.info(
+            f"[Camera] Imagem capturada ({len(camera.jpeg_data['buf'])} bytes)"
+        )
+        
+        # Carregar configuração da Vision API
+        config_manager = ConfigManager.get_instance()
+        vision_config = config_manager.get_config("VLLM", {})
+        
+        if not vision_config or not vision_config.get("zhipu"):
+            logger.error("[Camera] Vision API não configurada")
+            return (
+                '{"success": false, "message": '
+                '"Vision API não configurada em config.yaml"}'
+            )
+        
+        zhipu_config = vision_config.get("zhipu", {})
+        
+        if not zhipu_config.get("api_key"):
+            logger.error("[Camera] API Key do Zhipu não definida")
+            return (
+                '{"success": false, "message": '
+                '"API Key do Zhipu não configurada"}'
+            )
+        
+        # Enviar para análise (sync wrapper para função async)
+        logger.info("[Camera] Enviando para Vision API...")
+        
+        async def analyze():
+            return await explain_image_via_mcp(
+                image_base64=image_base64,
+                question=question,
+                vision_config=zhipu_config
+            )
+        
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        result = loop.run_until_complete(analyze())
+        
+        # Retornar resultado
+        if result.get("status") == "success":
+            logger.info("[Camera] Análise concluída com sucesso")
+            return (
+                f'{{"success": true, '
+                f'"photo_description": {json.dumps(result["analysis"])}, '
+                f'"tokens_used": {result.get("tokens", 0)}}}'
+            )
+        else:
+            logger.error(
+                f"[Camera] Erro na análise: {result.get('error')}"
+            )
+            error_msg = result.get("error", "Erro desconhecido")
+            return (
+                f'{{"success": false, '
+                f'"message": "Erro ao analisar imagem: {error_msg}"}}'
+            )
+    
+    except Exception as e:
+        logger.error(
+            f"[Camera] Erro ao capturar/analisar foto: {str(e)}",
+            exc_info=True
+        )
+        return (
+            f'{{"success": false, '
+            f'"message": "Erro: {str(e)}"}}'
+        )

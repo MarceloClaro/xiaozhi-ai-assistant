@@ -120,9 +120,23 @@ class Application:
                 ShortcutsPlugin(),
             )
             await self.plugins.setup_all(self)
-            # IniciandoEstado， UI para“”
+
+            # Garantir que MCP foi inicializado
             try:
-                await self.plugins.notify_device_state_changed(self.device_state)
+                mcp_plugin = self.plugins.get_plugin("mcp")
+                if mcp_plugin and hasattr(mcp_plugin, "_server"):
+                    tools_count = len(mcp_plugin._server.tools)
+                    msg = f"[APP] MCP iniciado com {tools_count}"
+                    logger.info(msg)
+            except Exception as e:
+                msg = f"[APP] Não foi possível verificar: {e}"
+                logger.warning(msg)
+
+            # IniciandoEstado， UI para""
+            try:
+                await self.plugins.notify_device_state_changed(
+                    self.device_state
+                )
             except Exception:
                 pass
             # await self.connect_protocol()

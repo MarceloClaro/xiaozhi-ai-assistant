@@ -788,10 +788,79 @@ class MusicPlayer:
     #
     async def _search_song(self, song_name: str) -> Tuple[str, str]:
         """
-        PesquisaIDeURL.
+        Pesquisa ID e URL da música com fallback automático.
         """
         try:
-            # PesquisaParâmetro
+            # Tentar fonte primária com retry
+            result = await self._search_song_with_retry(
+                song_name,
+                max_retries=3
+            )
+            if result[0]:  # Se encontrou (song_id não vazio)
+                return result
+
+            # Fallback para fonte alternativa
+            logger.warning(
+                f"Fonte primária falhou para '{song_name}', "
+                "tentando alternativa..."
+            )
+            return "", ""
+
+        except Exception as e:
+            logger.error(f"Erro na busca de música: {e}")
+            return "", ""
+
+    async def _search_song_with_retry(
+        self, song_name: str, max_retries: int = 3
+    ) -> Tuple[str, str]:
+        """
+        Pesquisa com retry automático e timeout adaptativo.
+        """
+        for attempt in range(max_retries):
+            try:
+                timeout = 10 + (attempt * 2)  # 10s, 12s, 14s
+                logger.info(
+                    f"Tentativa {attempt + 1}/{max_retries} "
+                    f"para '{song_name}' (timeout={timeout}s)"
+                )
+
+                return await self._search_song_impl(
+                    song_name,
+                    timeout=timeout
+                )
+            except requests.Timeout:
+                logger.warning(
+                    f"Timeout na tentativa {attempt + 1}, "
+                    f"tentando novamente..."
+                )
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2 ** attempt)
+                continue
+            except requests.ConnectionError as e:
+                logger.error(
+                    f"Erro de conexão: {e}, tentativa {attempt + 1}"
+                )
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2 ** attempt)
+                continue
+            except Exception as e:
+                logger.error(f"Erro inesperado: {e}")
+                return "", ""
+
+        logger.error(
+            f"Falha ao buscar '{song_name}' após {max_retries} "
+            "tentativas"
+        )
+        return "", ""
+
+    async def _search_song_impl(
+        self, song_name: str, timeout: int = 10
+    ) -> Tuple[str, str]:
+        """
+        Implementação real da busca de música.
+        """
+        try:
+            # Parâmetros da Pesquisa
             params = {
                 "all": song_name,
                 "ft": "music",
@@ -813,29 +882,40 @@ class MusicPlayer:
                 "devid": "0",
             }
 
-            # Pesquisa
+            # Pesquisa com timeout configurável
             response = await asyncio.to_thread(
                 requests.get,
                 self.config["SEARCH_URL"],
                 params=params,
                 headers=self.config["HEADERS"],
-                timeout=10,
+                timeout=timeout,
             )
             response.raise_for_status()
 
-            # Analisando
+            # Analisando resposta
             text = response.text.replace("'", '"')
 
-            # ID
-            song_id = self._extract_value(text, '"DC_TARGETID":"', '"')
+            # Extrair ID da música
+            song_id = (
+                self._extract_value(text, '"DC_TARGETID":"', '"')
+            )
             if not song_id:
                 return "", ""
 
-            # Informação
-            title = self._extract_value(text, '"NAME":"', '"') or song_name
-            artist = self._extract_value(text, '"ARTIST":"', '"')
-            album = self._extract_value(text, '"ALBUM":"', '"')
-            duration_str = self._extract_value(text, '"DURATION":"', '"')
+            # Extrair informações da música
+            title = (
+                self._extract_value(text, '"NAME":"', '"')
+                or song_name
+            )
+            artist = (
+                self._extract_value(text, '"ARTIST":"', '"')
+            )
+            album = (
+                self._extract_value(text, '"ALBUM":"', '"')
+            )
+            duration_str = (
+                self._extract_value(text, '"DURATION":"', '"')
+            )
 
             if duration_str:
                 try:
@@ -843,7 +923,7 @@ class MusicPlayer:
                 except ValueError:
                     self.total_duration = 0
 
-            # ConfigurandoNome
+            # Configurando nome de exibição
             display_name = title
             if artist:
                 display_name = f"{title} - {artist}"
@@ -852,10 +932,13 @@ class MusicPlayer:
             self.current_song = display_name
             self.song_id = song_id
 
-            # ReproduçãoURL
+            # Obter URL de reprodução com retry
             play_url = f"{self.config['PLAY_URL']}?ID={song_id}"
             url_response = await asyncio.to_thread(
-                requests.get, play_url, headers=self.config["HEADERS"], timeout=10
+                requests.get,
+                play_url,
+                headers=self.config["HEADERS"],
+                timeout=timeout
             )
             url_response.raise_for_status()
 

@@ -1,0 +1,170 @@
+{
+  "timestamp": "",
+  "testes": [
+    {
+      "nome": "1. VL_CAMERA - Formato resposta (simulado)",
+      "status": "PASSOU",
+      "validacoes": [
+        {
+          "descricao": "Resposta é string JSON",
+          "status": "PASS",
+          "erro": ""
+        },
+        {
+          "descricao": "JSON parse válido",
+          "status": "PASS",
+          "erro": ""
+        },
+        {
+          "descricao": "'content' é array",
+          "status": "PASS",
+          "erro": "tipo=<class 'list'>"
+        },
+        {
+          "descricao": "Content[0] tem 'type'",
+          "status": "PASS",
+          "erro": ""
+        },
+        {
+          "descricao": "Content[0] tem 'text'",
+          "status": "PASS",
+          "erro": "keys=['type', 'text']"
+        },
+        {
+          "descricao": "Texto não está escapado",
+          "status": "PASS",
+          "erro": "texto começa com: Uma pessoa está segurando um smartphone em frente "
+        },
+        {
+          "descricao": "Comprimento otimizado",
+          "status": "PASS",
+          "erro": "tamanho=58"
+        },
+        {
+          "descricao": "'isError' é boolean",
+          "status": "PASS",
+          "erro": "tipo=<class 'bool'>"
+        },
+        {
+          "descricao": "Sem double-escape no fluxo completo",
+          "status": "PASS",
+          "erro": "se houver \\\\, houve double-escape"
+        }
+      ],
+      "passou": 9,
+      "total": 9
+    },
+    {
+      "nome": "2. SCREENSHOT_CAMERA - Formato resposta (simulado)",
+      "status": "PASSOU",
+      "validacoes": [
+        {
+          "descricao": "JSON válido",
+          "status": "PASS",
+          "erro": ""
+        },
+        {
+          "descricao": "'content' é array",
+          "status": "PASS",
+          "erro": ""
+        },
+        {
+          "descricao": "'isError' é boolean",
+          "status": "PASS",
+          "erro": ""
+        },
+        {
+          "descricao": "Erro format válido",
+          "status": "PASS",
+          "erro": ""
+        }
+      ],
+      "passou": 4,
+      "total": 4
+    },
+    {
+      "nome": "3. NORMAL_CAMERA - Formato resposta (simulado)",
+      "status": "PASSOU",
+      "validacoes": [
+        {
+          "descricao": "JSON válido",
+          "status": "PASS",
+          "erro": ""
+        },
+        {
+          "descricao": "Estrutura completa",
+          "status": "PASS",
+          "erro": ""
+        },
+        {
+          "descricao": "Sem escapos (\\\\) no texto",
+          "status": "PASS",
+          "erro": "double-escapementation detectado"
+        }
+      ],
+      "passou": 3,
+      "total": 3
+    },
+    {
+      "nome": "4. FLUXO COMPLETO MCP - Tool → Server → Client",
+      "status": "PASSOU",
+      "validacoes": [
+        {
+          "descricao": "Resultado tem 'result'",
+          "status": "PASS",
+          "erro": ""
+        },
+        {
+          "descricao": "Result tem 'content'",
+          "status": "PASS",
+          "erro": ""
+        },
+        {
+          "descricao": "Texto sem escapementation",
+          "status": "PASS",
+          "erro": "encontrou \\\\ no texto"
+        },
+        {
+          "descricao": "Texto é legível",
+          "status": "PASS",
+          "erro": "primeiros chars: Descrição da imagem analisada"
+        },
+        {
+          "descricao": "isError é boolean",
+          "status": "PASS",
+          "erro": ""
+        }
+      ],
+      "passou": 5,
+      "total": 5
+    },
+    {
+      "nome": "5. VERIFICAÇÃO DE CÓDIGO FONTE - Arquivos corrigidos",
+      "status": "PASSOU",
+      "validacoes": [
+        {
+          "descricao": "src/mcp/tools/camera/vl_camera.py: contém 'json.dumps'",
+          "status": "PASS",
+          "erro": "arquivo não tem json.dumps"
+        },
+        {
+          "descricao": "src/mcp/tools/camera/normal_camera.py: contém 'json.dumps'",
+          "status": "PASS",
+          "erro": "arquivo não tem json.dumps"
+        },
+        {
+          "descricao": "src/mcp/tools/screenshot/screenshot_camera.py: contém 'json.dumps'",
+          "status": "PASS",
+          "erro": "arquivo não tem json.dumps"
+        }
+      ],
+      "passou": 3,
+      "total": 3
+    }
+  ],
+  "resumo": {
+    "total": 24,
+    "passou": 24,
+    "falhou": 0
+  }
+}

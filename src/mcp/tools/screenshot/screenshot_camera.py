@@ -173,7 +173,9 @@ class ScreenshotCamera(BaseCamera):
             from PIL import Image
 
             logger.debug(
-                f"Capturing screenshot with macOS screencapture command, display_id: {display_id}"
+                f"Capturing screenshot with macOS screencapture "
+                f"command, display_id: {display_id}"
+            )
 
             # display_id
             if display_id is None:
@@ -280,7 +282,9 @@ class ScreenshotCamera(BaseCamera):
             from PIL import Image
 
             logger.debug(
-                f"Capturing screenshot with Windows API, display_id: {display_id}"
+                f"Capturing screenshot with Windows API, "
+                f"display_id: {display_id}"
+            )
 
             # （Dispositivo）
             user32 = ctypes.windll.user32
@@ -366,11 +370,13 @@ class ScreenshotCamera(BaseCamera):
             import tempfile
 
             logger.debug(
-                f"Capturing screenshot with Linux screenshot commands, display_id: {display_id}"
+                f"Capturing screenshot with Linux screenshot commands, "
+                f"display_id: {display_id}"
+            )
 
-            # TentativaNão  deLinux
+            # TentativaNao  deLinux
             screenshot_commands = [
-                ["gnome-screenshot", "-f"],  # GNOME"
+                ["gnome-screenshot", "-f"],  # GNOME
                 ["scrot"],  # scrot
                 ["import", "-window", "root"],  # ImageMagick
             ]
@@ -440,20 +446,20 @@ class ScreenshotCamera(BaseCamera):
 
             # deDadosparaDispositivo
             original_jpeg_data = camera_instance.get_jpeg_data()
-            camera_instance.set_jpeg_data(self.jpeg_data["buf"])"
+            camera_instance.set_jpeg_data(self.jpeg_data["buf"])
 
             try:
                 # Usandode
                 result = camera_instance.analyze(question)
 
                 # RestaurandoOriginalDados
-                camera_instance.set_jpeg_data(original_jpeg_data["buf"])"
+                camera_instance.set_jpeg_data(original_jpeg_data["buf"])
 
                 return result
 
             except Exception as e:
                 # RestaurandoOriginalDados
-                camera_instance.set_jpeg_data(original_jpeg_data["buf"])"
+                camera_instance.set_jpeg_data(original_jpeg_data["buf"])
                 raise e
 
         except Exception as e:

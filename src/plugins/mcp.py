@@ -33,8 +33,17 @@ class McpPlugin(Plugin):
             self._server.set_send_callback(_send)
             # （ calendar ）。de CalendarPlugin 
             self._server.add_common_tools()
-        except Exception:
-            pass
+            tools_count = len(self._server.tools)
+            logger.info(f"[MCP] Ferramentas registradas: {tools_count}")
+            camera_available = any(
+                t.name == "take_photo" for t in self._server.tools
+            )
+            cam_status = "DISPONIVEL" if camera_available else "FALTA"
+            logger.info(f"[MCP] Camera tool: {cam_status}")
+        except Exception as e:
+            logger.error(f"[MCP] Erro ao registrar ferramentas: {e}")
+            import traceback
+            traceback.print_exc()
 
     async def on_incoming_json(self, message: Any) -> None:
         if not isinstance(message, dict):

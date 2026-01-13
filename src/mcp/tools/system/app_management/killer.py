@@ -53,15 +53,18 @@ async def kill_application(args: Dict[str, Any]) -> bool:
                 if success:
                     success_count += 1
                     logger.info(
-                        f"[AppKiller] SucessoFechandoAplicação: {app['name']} (PID: {app.get('pid', 'N/A')})"
+                        f"[AppKiller] SucessoFechandoAplicacao: {app['name']} (PID: {app.get('pid', 'N/A')})"
+                    )
                 else:
                     logger.warning(
-                        f"[AppKiller] FechandoAplicaçãoFalha: {app['name']} (PID: {app.get('pid', 'N/A')})"
+                        f"[AppKiller] FechandoAplicacaoFalha: {app['name']} (PID: {app.get('pid', 'N/A')})"
+                    )
 
             success = success_count > 0
             logger.info(
-                f"[AppKiller] FechandoOperaçãoConcluído，SucessoFechando {success_count}/{len(running_apps)} Processos"
-)
+                f"[AppKiller] FechandoOperacaoConcluido,"
+                f"SucessoFechando {success_count}/{len(running_apps)} Processos"
+            )
         return success
 
     except Exception as e:

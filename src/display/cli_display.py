@@ -142,17 +142,23 @@ class CliDisplay(BaseDisplay):
         """
         try:
             while self.running:
-                # EmTTY，EntradaEntrada
-                if self._use_ansi:
-                    await self._render_input_area()
-                    # Entrada（），Entrada，EmCaracteres
-                    cmd = await asyncio.to_thread(self._read_line_raw)
-                    # Entrada（deEm）
-                    self._clear_input_area()
-                    await self._render_dashboard()
-                else:
-                    cmd = await asyncio.to_thread(input)
-                await self._handle_command(cmd.lower().strip())
+                try:
+                    # EmTTY，EntradaEntrada
+                    if self._use_ansi:
+                        await self._render_input_area()
+                        # Entrada（），Entrada，EmCaracteres
+                        cmd = await asyncio.to_thread(self._read_line_raw)
+                        # Entrada（deEm）
+                        self._clear_input_area()
+                        await self._render_dashboard()
+                    else:
+                        cmd = await asyncio.to_thread(input)
+                    await self._handle_command(cmd.lower().strip())
+                except Exception as e:
+                    # Captura qualquer erro de entrada e mantém o loop rodando
+                    self.logger.debug(f"Erro na entrada de teclado (continuar rodando): {e}")
+                    # Aguarda um pouco antes de tentar novamente
+                    await asyncio.sleep(0.5)
         except asyncio.CancelledError:
             pass
 

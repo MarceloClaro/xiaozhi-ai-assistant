@@ -1,0 +1,15 @@
+# ⚠️ NÃO COMMITE ARQUIVOS COM CHAVES DE API
+.env
+.env.local
+config.local.json
+secrets.json
+
+# Variáveis de ambiente com chaves sensíveis
+GEMINI_API_KEY
+ZHIPU_API_KEY
+ALIYUN_API_KEY
+OPENAI_API_KEY
+
+# Arquivos de configuração local
+config/*.local.*
+config/secrets.*
